@@ -52,7 +52,8 @@ def play(values_list):
 
         pygame.display.flip()
         pygame.display.update()
-        clock.tick(5)
+        clock.tick(1)
+        #clock.tick(1)
 
     # leave game showing until closed by user
     while True:

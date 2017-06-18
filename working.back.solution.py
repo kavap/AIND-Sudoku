@@ -15,7 +15,7 @@ def assign_value(values, box, value):
         assignments.append(values.copy())
     return values
 
-def naked_twins(values,sudokuBoard=None):
+def naked_twins(values):
     """Eliminate values using the naked twins strategy.
     Args:
         values(dict): a dictionary of the form {'box_name': '123456789', ...}
@@ -31,9 +31,7 @@ def naked_twins(values,sudokuBoard=None):
             givenString = givenString.replace(c,'')
         return givenString
     
-    if sudokuBoard is None:
-        sudokuBoard = getSudokuBoard()
-
+    sudokuBoard = getSudokuBoard()
     rows = sudokuBoard['rows']
     cols = sudokuBoard['cols']
     boxes = sudokuBoard['boxes']
@@ -49,8 +47,7 @@ def naked_twins(values,sudokuBoard=None):
                 for boxPeer in filter(lambda boxPeer: (boxPeer != box) and (values[boxPeer] == values[box]) ,givenUnit):
                     twin = boxPeer
                     for boxPeer in filter(lambda boxPeer:boxPeer not in (box,twin), givenUnit) :    #Now eliminate Naked twin choices from all Peers except Naked twin
-                        assign_value(values, boxPeer, removeChars(values[boxPeer],values[box]))   # Add this update to visualization
-                        values[boxPeer] = removeChars(values[boxPeer],values[box])                                               
+                        values[boxPeer] = removeChars(values[boxPeer],values[box])
         if values == prevValues:
             moreTwinsMayExist = False
         else:
@@ -68,7 +65,7 @@ def diagonals(rows,cols):
     diagonals = [d1] + [d2]
     return diagonals #d1.append(d2)    
 
-def grid_values(grid,sudokuBoard):
+def grid_values(grid):
     """
     Convert grid into a dict of {square: char} with '123456789' for empties.
     Args:
@@ -78,7 +75,7 @@ def grid_values(grid,sudokuBoard):
             Keys: The boxes, e.g., 'A1'
             Values: The value in each box, e.g., '8'. If the box has no value, then the value will be '123456789'.
     """
-    #sudokuBoard = getSudokuBoard()
+    sudokuBoard = getSudokuBoard()
     rows = sudokuBoard['rows']
     cols = sudokuBoard['cols']
     boxes = sudokuBoard['boxes']
@@ -90,13 +87,13 @@ def grid_values(grid,sudokuBoard):
     
     return dict(zip(boxes,['123456789'if item == '.' else item for item in list(grid)]))
 
-def display(values,sudokuBoard):
+def display(values):
     """
     Display the values as a 2-D grid.
     Args:
         values(dict): The sudoku in dictionary form
     """
-    #sudokuBoard = getSudokuBoard()
+    sudokuBoard = getSudokuBoard()
     rows = sudokuBoard['rows']
     cols = sudokuBoard['cols']
     boxes = sudokuBoard['boxes']
@@ -112,9 +109,9 @@ def display(values,sudokuBoard):
         if r in 'CF': print(line)
     return
 
-def eliminate(values,sudokuBoard):
+def eliminate(values):
 
-    #sudokuBoard = getSudokuBoard()
+    sudokuBoard = getSudokuBoard()
     rows = sudokuBoard['rows']
     cols = sudokuBoard['cols']
     boxes = sudokuBoard['boxes']
@@ -126,18 +123,17 @@ def eliminate(values,sudokuBoard):
     
     for solved_box in solved_boxes:
         for peer in peers[solved_box]:
-            assign_value(values, peer, values[peer].replace(values[solved_box],''))   # Add this update to visualization
             values[peer] = values[peer].replace(values[solved_box],'')
     return values
 
-def only_choice(values,sudokuBoard):
+def only_choice(values):
     def peersHave(box,candidateValue):
         for peer in peers[box]:
             if candidateValue in values[peer]:                
                 return True
         return False
 
-    #sudokuBoard = getSudokuBoard()
+    sudokuBoard = getSudokuBoard()
     rows = sudokuBoard['rows']
     cols = sudokuBoard['cols']
     boxes = sudokuBoard['boxes']
@@ -151,12 +147,11 @@ def only_choice(values,sudokuBoard):
         # If the candidate value is unique to the cell amongst peers, it is the only choice for
         # given cell
         for candidateValue in filter(lambda candidateValue: not peersHave(box,candidateValue), values[box]):  
-            assign_value(values, box, candidateValue)   # Add this update to visualization
             values[box] = candidateValue  # Set the cell value to the candidate value that's
                                           # not repeated amongst peers
     return values
 
-def reduce_puzzle(values,sudokuBoard):
+def reduce_puzzle(values):
 
     stalled = False
     iterations = 0
@@ -167,13 +162,13 @@ def reduce_puzzle(values,sudokuBoard):
         solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
 
         # Eliminate Strategy       
-        values = eliminate(values,sudokuBoard)
+        values = eliminate(values)
         
         # Only Choice Strategy
-        values = only_choice(values,sudokuBoard)
+        values = only_choice(values)
       
         # Naked Twins Strategy
-        values = naked_twins(values,sudokuBoard)
+        values = naked_twins(values)
 
         # Check how many boxes have a determined value, to compare
         solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
@@ -187,14 +182,14 @@ def reduce_puzzle(values,sudokuBoard):
         
     return values
 
-def search(values,sudokuBoard):
+def search(values):
     "Using depth-first search and propagation, create a search tree and solve the sudoku."
     
     # First, reduce the puzzle using the previous function
-    values = reduce_puzzle(values,sudokuBoard)
+    values = reduce_puzzle(values)
     if values is False:
         return False
-    #display(values,sudokuBoard)
+    #display(values)
     #print()
     
     # Check if the Puzzle is already solved (Exit condition for Recursion)
@@ -215,7 +210,7 @@ def search(values,sudokuBoard):
     for value in values[splitPointCell]:
         newSudoku = values.copy()
         newSudoku[splitPointCell] = value
-        searchNode = search(newSudoku,sudokuBoard)
+        searchNode = search(newSudoku)
         if searchNode:
             return searchNode
 
@@ -229,8 +224,7 @@ def solve(grid):
         The dictionary representation of the final sudoku grid. False if no solution exists.
     """
     # Create Board layout and components representations. Other functions rely on them
-    sudokuBoard = getSudokuBoard()
-    values = search(grid_values(grid,sudokuBoard),sudokuBoard)
+    values = search(grid_values(grid))
     return values
 
 def getSudokuBoard():
@@ -262,22 +256,12 @@ def getSudokuBoard():
 
     return sudokuBoard
 
-def displayTrace(assignments,sudokuBoard):
-    for step in assignments:
-        display(step,sudokuBoard)
-        print()
-        print()
 
 if __name__ == '__main__':
 
     diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
-    #diag_sudoku_grid = '...7.9....85...31.2......7...........1..7.6......8...7.7.........3......85.......'
-    sudokuBoard = getSudokuBoard()
-    import timeit
-    print(timeit.timeit('display(solve(diag_sudoku_grid),sudokuBoard)',setup='from __main__ import solve,diag_sudoku_grid,display,sudokuBoard',number=1))
-    display(solve(diag_sudoku_grid),sudokuBoard)
-    #print(assignments)
-    #displayTrace(assignments,sudokuBoard)
+    display(solve(diag_sudoku_grid))
+
     try:
         from visualize import visualize_assignments
         visualize_assignments(assignments)
